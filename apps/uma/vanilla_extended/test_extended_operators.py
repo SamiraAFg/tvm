@@ -21,7 +21,7 @@ from tvm import relay
 from tvm.relay import transform
 from collections import OrderedDict
 import numpy as np
-
+import os
 
 from tvm.testing.aot import (AOTTestModel as AOTModel,
                              generate_ref_data,
@@ -54,18 +54,15 @@ def create_conv2d():
 def create_depthconv2d():
     "Create depth conv2d layer in relay to offload to vanilla accelerator"
     dtype = "float32"
-    groups = 3
-    in_channels = 3*groups
-    k = 1
-    w_channels = int(in_channels/groups)
-    ishape = (1, in_channels, 28, 28)
-    wshape = (9, w_channels, k, k)
+    k = 3
+    ishape = (1, 3, 14, 14)
+    wshape = (3, 1, k, k)
 
     data0 = relay.var("data", shape=ishape, dtype=dtype)
     weight0 = relay.var("weight", shape=wshape, dtype=dtype)
     out = relay.nn.conv2d(data0, weight0, kernel_size=(k, k),
                           padding=(1, 1), strides=(1,1),
-                          groups=groups,
+                          groups=3, channels=3,
                           data_layout="NCHW", kernel_layout="OIHW",)
     main_f = relay.Function([data0, weight0], out)
     mod = tvm.IRModule()
@@ -118,13 +115,17 @@ def create_relu():
 
     return mod, inputs, output_list
 
-def offload_to_vanilla(mod, input_list, output_list):
-    uma_backend = VanillaExtendedBackend(depthconv2d_flag=True)
+def offload_to_vanilla(mod, input_list, output_list, test_case, depthconv2d_flag):
+    uma_backend = VanillaExtendedBackend(depthconv2d_flag)
     uma_backend.register()
     mod = uma_backend.partition(mod)
+
     target = tvm.target.Target("vanilla_extended", host=tvm.target.Target("c"))
 
     export_directory = tvm.contrib.utils.tempdir(keep_for_debug=True).path
+    export_directory = os.path.join("./out_tflite/", test_case)
+    if os.path.exists(export_directory):
+        os.system("rm -rf " + export_directory)
     print(f"Generated files are in {export_directory}")
 
     aot_test_model = AOTModel(module=mod, inputs=input_list, outputs=output_list)
@@ -138,19 +139,20 @@ def offload_to_vanilla(mod, input_list, output_list):
                     verbose=True,
                     test_dir=str(export_directory),)
 
+
 def main():
     "Call relay operators and offload to VanillaExtended backend"
     mod, input_list, output_list = create_conv2d()
-    offload_to_vanilla(mod, input_list, output_list)
+    offload_to_vanilla(mod, input_list, output_list, "conv2d", depthconv2d_flag=False)
 
     mod, input_list, output_list = create_depthconv2d()
-    offload_to_vanilla(mod, input_list, output_list)
+    offload_to_vanilla(mod, input_list, output_list, "depthconv2d", depthconv2d_flag=True)
 
     mod, input_list, output_list = create_dense()
-    offload_to_vanilla(mod, input_list, output_list)
+    offload_to_vanilla(mod, input_list, output_list, "dense", depthconv2d_flag=False)
 
     mod, input_list, output_list = create_relu()
-    offload_to_vanilla(mod, input_list, output_list)
+    offload_to_vanilla(mod, input_list, output_list, "relu", depthconv2d_flag=False)
 
 if __name__ == "__main__":
     main()

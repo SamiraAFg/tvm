@@ -33,7 +33,7 @@ def dense_pattern():
 def depthwise_conv2d_pattern():
     "Pattern for depth_conv2d with 3 groups"
     pattern = is_op("nn.conv2d")(wildcard(), wildcard())
-    pattern = pattern.has_attr({"strides": [1, 1], "groups": 3}) # groups > 1
+    pattern = pattern.has_attr({"strides": [1, 1], "groups":3, "channels":3,}) # groups > 1
     return pattern
 
 def relu_pattern():

@@ -43,9 +43,10 @@ class VanillaExtendedBackend(UMABackend):
         # Relay Pattern registration
         self._register_pattern("conv2d", conv2d_pattern())
         self._register_pattern("dense", dense_pattern())
-        self._register_pattern("relu", relu_pattern())
         if depthconv2d_flag:  # depthwise and relu cannot be matched at same time
             self._register_pattern("depthwise_conv2d", depthwise_conv2d_pattern())
+        else:
+            self._register_pattern("relu", relu_pattern())
 
         # Relay to Relay function registration
         self._register_relay_pass(PassPhase.PRE_PARTITIONING, ConvertLayout()) # Needed for tflite
@@ -53,9 +54,10 @@ class VanillaExtendedBackend(UMABackend):
         # Relay to TIR function registration
         self._register_tir_pass(PassPhase.TIR_PHASE_0, VanillaExtendedConv2dPass())
         self._register_tir_pass(PassPhase.TIR_PHASE_0, VanillaExtendedDense())
-        self._register_tir_pass(PassPhase.TIR_PHASE_0, VanillaExtendedReluPass())
         if depthconv2d_flag:
             self._register_tir_pass(PassPhase.TIR_PHASE_0, VanillaExtendedDepthwiseConv2dPass())
+        else:
+            self._register_tir_pass(PassPhase.TIR_PHASE_0, VanillaExtendedReluPass())
 
         # TIR to runtime function registration
         self._register_codegen(fmt="c", includes=gen_includes)
