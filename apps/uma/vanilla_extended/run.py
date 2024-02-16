@@ -73,7 +73,7 @@ def main():
     mod, _, params = create_relay_module_and_inputs_from_tflite_file(tflite_file,
                                                                      bind_params_by_name=False)
 
-    uma_backend = VanillaExtendedBackend(depthconv2d_flag=True)
+    uma_backend = VanillaExtendedBackend(depthconv2d_flag=False)
     uma_backend.register()
 
     target = tvm.target.Target("vanilla_extended", host=tvm.target.Target("c"))
