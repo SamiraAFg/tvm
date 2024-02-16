@@ -21,19 +21,42 @@ import tvm
 
 
 def qnn_conv2d_add_pattern():
-    
-    qnn_conv2d = is_op("qnn.conv2d")(wildcard(), wildcard(), is_constant(),
-                         is_constant(), is_constant(), is_constant(),)
-    
-
+    dtype = "int8"
+    qnn_conv2d = is_op("qnn.conv2d")(wildcard().has_dtype(dtype), 
+                                     wildcard().has_dtype(dtype),
+                                     is_constant(), 
+                                     is_constant(), 
+                                     is_constant(), 
+                                     is_constant(),)
     qnn_conv2d = qnn_conv2d.has_attr({"strides": [1, 1], "groups": 1})
-
     pattern = is_op("add")(qnn_conv2d, wildcard())
-
-
     return pattern   
 
+def qnn_dense_add_pattern():
+    dtype = "int8"
+    qnn_d = is_op("qnn.dense")(wildcard().has_dtype(dtype), 
+                                     wildcard().has_dtype(dtype), 
+                                     is_constant(), 
+                                     is_constant(), 
+                                     is_constant(), 
+                                     is_constant(),)
 
+    pattern = is_op("add")(qnn_d, wildcard())
+    return pattern   
 
+def qnn_relu_pattern():
+    pattern = is_op("clip")(wildcard()) 
+    return pattern   
 
-
+def qnn_depthconv2d_add_pattern():
+    dtype = "int8"   
+    qnn_conv2d = is_op("qnn.conv2d")(wildcard().has_dtype(dtype), 
+                                     wildcard().has_dtype(dtype), 
+                                     is_constant(), 
+                                     is_constant(), 
+                                     is_constant(), 
+                                     is_constant(),)
+    qnn_conv2d = qnn_conv2d.has_attr({"strides": [1, 1]})  #groups >= 2
+    pattern = is_op("add")(qnn_conv2d, wildcard())
+    
+    return pattern   

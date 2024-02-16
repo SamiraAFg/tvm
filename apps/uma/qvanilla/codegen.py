@@ -19,10 +19,14 @@
 import tvm
 import pathlib
 
+# includes += f'#include "{topdir}/qdepthconv2dnchw.cc"\n'
+# includes += f'#include "{topdir}/qrelu.cc"\n'
 
 def gen_includes() -> str:
     topdir = pathlib.Path(__file__).parent.absolute()
 
     includes = ""
-    includes += f'#include "{topdir}/conv2dnchw.cc"'
+    includes += f'#include "{topdir}/conv2dnchw.cc"\n'
+    includes += f'#include "{topdir}/qdense.cc"\n'
+   
     return includes

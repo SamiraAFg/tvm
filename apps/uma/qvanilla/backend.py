@@ -15,12 +15,24 @@
 # specific language governing permissions and limitations
 # under the License.
 """UMA backend for the q_vanilla_accelerator accelerator"""
-from .passes import QVanillaAcceleratorConv2dPass, ConvertLayout
+
+from passes import (QVanillaAcceleratorConv2dPass, 
+                    QVanillaAcceleratorDensePass, 
+                    QVanillaAcceleratorDepthwiseConv2dPass,  
+                    QVanillaAcceleratorReluPass,
+                    ConvertLayout
+                    )
 from tvm.relay.backend.contrib.uma.api.utils import PassPhase
 from tvm.relay.backend.contrib.uma.backend import UMABackend
-from .codegen import gen_includes
-from .patterns import qnn_conv2d_add_pattern
-from .strategies import qnn_conv2d_strategy
+from codegen import gen_includes
+from patterns import (qnn_conv2d_add_pattern, 
+                      qnn_dense_add_pattern, 
+                      qnn_depthconv2d_add_pattern, 
+                      qnn_relu_pattern
+                      )
+from strategies import (qnn_conv2d_strategy, 
+                        qnn_dense_strategy, 
+                        qnn_depthwise_conv2d_strategy)
 
 
 class QVanillaAcceleratorBackend(UMABackend):
@@ -34,18 +46,23 @@ class QVanillaAcceleratorBackend(UMABackend):
         self._register_target_attr("dimension")
 
         # Relay Pattern registration
-        self._register_pattern("qnn_conv2d_add", qnn_conv2d_add_pattern())
-
-
+        self._register_pattern("qnn_conv2d_add", qnn_conv2d_add_pattern())        
+        self._register_pattern("qnn_dense_add", qnn_dense_add_pattern())
+        # self._register_pattern("qnn_depthconv2d_add", qnn_depthconv2d_add_pattern())
+        # self._register_pattern("qnn_relu", qnn_relu_pattern())
+        
         # Relay to Relay function registration
         self._register_relay_pass(PassPhase.PRE_PARTITIONING, ConvertLayout())
 
-
         # Relay to TIR function registration
         self._register_operator_strategy("qnn.conv2d", qnn_conv2d_strategy)
+        self._register_operator_strategy("qnn.dense", qnn_dense_strategy)
+        # self._register_operator_strategy("qnn.depthwise_conv2d", qnn_depthwise_conv2d_strategy)
 
         self._register_tir_pass(PassPhase.TIR_PHASE_0, QVanillaAcceleratorConv2dPass())
-
+        self._register_tir_pass(PassPhase.TIR_PHASE_0, QVanillaAcceleratorDensePass())
+        # self._register_tir_pass(PassPhase.TIR_PHASE_0, QVanillaAcceleratorDepthwiseConv2dPass())
+        # self._register_tir_pass(PassPhase.TIR_PHASE_0, QVanillaAcceleratorReluPass())
 
         # TIR to runtime function registration
         self._register_codegen(fmt="c", includes=gen_includes)

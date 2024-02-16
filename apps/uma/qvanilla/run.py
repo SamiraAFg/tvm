@@ -48,13 +48,16 @@ def generate_tflite_file(tflite_filename):
     tf_model = tf.keras.models.Sequential(
         [
             tf.keras.Input(shape=(28, 28, 1)),
-            tf.keras.layers.Conv2D(4, (1, 1), padding="same", activation="relu"),
+            tf.keras.layers.Conv2D(3, (1, 1), padding="same", activation="relu"),
+            # tf.keras.layers.DepthwiseConv2D(4, (1, 1), padding="same", activation="relu"),
             tf.keras.layers.Flatten(input_shape=(28, 28)),
             tf.keras.layers.Dense(32, activation="relu"),
             tf.keras.layers.Dropout(0.2),
             tf.keras.layers.Dense(10),
         ]
     )
+    
+    print(tf_model.summary())
     output = tf_model(x_train[:1])
     output = output.numpy()
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
@@ -71,8 +74,8 @@ def generate_tflite_file(tflite_filename):
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
     converter.representative_dataset = representative_dataset
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-    converter.inference_input_type = tf.int8  # or tf.uint8
-    converter.inference_output_type = tf.int8  # or tf.uint8
+    converter.inference_input_type = tf.int8 
+    converter.inference_output_type = tf.int8  
     tflite_quant_model = converter.convert()
     with open(tflite_filename, "wb") as f:
         f.write(tflite_quant_model)
@@ -90,9 +93,8 @@ def main():
 
     interpreter = tf.lite.Interpreter(model_path=tflite_file)
     tf_model_details = interpreter.get_input_details()
-    mod, _, params = create_relay_module_and_inputs_from_tflite_file(
-        tflite_file, bind_params_by_name=False
-    )
+    mod, _, params = create_relay_module_and_inputs_from_tflite_file(tflite_file, 
+                                                                     bind_params_by_name=False)
 
     uma_backend = QVanillaAcceleratorBackend()
     uma_backend.register()
@@ -102,33 +104,32 @@ def main():
     
     # Generation of test input and output
     data_shape = [int(x) for x in mod["main"].params[0].type_annotation.shape]
-    data = np.random.uniform(size=data_shape).astype("int8")
+    data = np.random.uniform(1, 127, size=data_shape).astype("int8")
     input_list = {str(tf_model_details[0]["name"]): data}
     output_list = generate_ref_data(mod, input_list, params)
 
-
     mod = uma_backend.partition(mod)
-      
- 
-    
     export_directory = tvm.contrib.utils.tempdir(keep_for_debug=True).path
     print(f"Generated files are in {export_directory}")
-
+    
+    # export_directory = "./out_quant_tflite/gen" # tvm.contrib.utils.tempdir(keep_for_debug=True).path
+    # print(f"Generated files are in {export_directory}")
+    # if os.path.exists(export_directory):
+    #     os.system("rm -rf " + export_directory)
+        
     aot_test_model = AOTModel(module=mod, inputs=input_list, outputs=output_list, params=params)
 
     test_runner = AOT_DEFAULT_RUNNER
 
-    compile_and_run(
-        aot_test_model,
-        test_runner,
-        interface_api="c",
-        use_unpacked_api=True,
-        workspace_byte_alignment=1,
-        debug_calculated_workspaces=False,
-        target=[target_c, target],
-        test_dir=str(export_directory),
-    )
-
+    compile_and_run(aot_test_model,
+                    test_runner,
+                    interface_api="c",
+                    use_unpacked_api=True,
+                    workspace_byte_alignment=1,
+                    debug_calculated_workspaces=False,
+                    target=[target_c, target],
+                    verbose=True,
+                    test_dir=str(export_directory),)
 
     
 if __name__ == "__main__":

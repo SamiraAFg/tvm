@@ -42,12 +42,29 @@ from tvm import topi
 
 @relay.op.strategy.override_native_generic_func("qnn_conv2d_strategy")
 def qnn_conv2d_strategy(attrs, inputs, out_type, target):
-
     strategy = _op.OpStrategy()
     strategy.add_implementation(
         wrap_topi_qnn_conv2d(topi.hexagon.qnn_conv2d),
-        wrap_topi_schedule(topi.hexagon.schedule_qnn_conv2d)
+        wrap_topi_schedule(topi.hexagon.schedule_qnn_conv2d),
+        name="custom_qnn_conv2d",
     )
     
     return strategy
 
+@relay.op.strategy.override_native_generic_func("qnn_dense_strategy")
+def qnn_dense_strategy(attrs, inputs, out_type, target):
+    strategy = _op.OpStrategy()
+    strategy.add_implementation(
+        wrap_topi_qnn_dense(topi.hexagon.qnn_dense),
+        wrap_topi_schedule(topi.hexagon.schedule_qnn_dense),
+        name="custom_qnn_dense",)
+    return strategy
+
+@relay.op.strategy.override_native_generic_func("qnn_depthwise_conv2d_strategy")
+def qnn_depthwise_conv2d_strategy(attrs, inputs, out_type, target):
+    strategy = _op.OpStrategy()
+    strategy.add_implementation(
+        wrap_topi_qnn_conv2d(topi.hexagon.qnn_depthwise_conv2d),
+        wrap_topi_schedule(topi.hexagon.schedule_qnn_depthwise_conv2d),
+        name="custom_qnn_depthwise_conv2d",)
+    return strategy
