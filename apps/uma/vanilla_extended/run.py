@@ -37,8 +37,7 @@ def generate_tflite_file(tflite_filename):
     x_train, x_test = x_train.reshape(-1, 28, 28, 1), x_test.reshape(-1, 28, 28, 1)
     tf_model = tf.keras.models.Sequential([tf.keras.Input(shape=(28, 28, 1)),
                                            tf.keras.layers.Conv2D(3, (3, 3),
-                                                                  padding="same",
-                                                                  activation="relu"),
+                                                                  padding="same"), # TODO: ReLU in this layer would get merged with pattern of following layer
                                            tf.keras.layers.DepthwiseConv2D(3, (1, 1),
                                                                            padding="same",
                                                                            activation="relu"),
@@ -73,7 +72,7 @@ def main():
     mod, _, params = create_relay_module_and_inputs_from_tflite_file(tflite_file,
                                                                      bind_params_by_name=False)
 
-    uma_backend = VanillaExtendedBackend(depthconv2d_flag=False)
+    uma_backend = VanillaExtendedBackend()
     uma_backend.register()
 
     target = tvm.target.Target("vanilla_extended", host=tvm.target.Target("c"))
@@ -88,6 +87,10 @@ def main():
     mod = uma_backend.partition(mod)
     export_directory = tvm.contrib.utils.tempdir(keep_for_debug=True).path
     print(f"Generated files are in {export_directory}")
+    # export_directory = os.path.join("./out_tflite_model/")
+    # if os.path.exists(export_directory):
+    #     os.system("rm -rf " + export_directory)
+    # print(f"Generated files are in {export_directory}")
 
     aot_test_model = AOTModel(module=mod, inputs=input_list, outputs=output_list, params=params)
     test_runner = AOT_DEFAULT_RUNNER

@@ -395,8 +395,7 @@ class ConvertLayout:
     " Convert the layout to NCHW and remove ununsed functions to clean up the graph."
     def transform_module(self, mod, ctx):
         # My pass functionality...
-        desired_layouts = {'nn.conv2d': ['NCHW', 'default'],
-                           'nn.dense': ['NHW', 'default'],}
+        desired_layouts = {'nn.conv2d': ['NCHW', 'OIHW']}
 
         seq = tvm.transform.Sequential([relay.transform.RemoveUnusedFunctions(),
                                     relay.transform.ConvertLayout(desired_layouts)])

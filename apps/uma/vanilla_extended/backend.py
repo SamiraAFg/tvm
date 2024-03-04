@@ -34,7 +34,7 @@ from tvm.relay.backend.contrib.uma.backend import UMABackend
 class VanillaExtendedBackend(UMABackend):
     """UMA backend for the VanillaExtended accelerator."""
 
-    def __init__(self, depthconv2d_flag=False):
+    def __init__(self):
         super().__init__()
 
         # Target configuration
@@ -43,10 +43,8 @@ class VanillaExtendedBackend(UMABackend):
         # Relay Pattern registration
         self._register_pattern("conv2d", conv2d_pattern())
         self._register_pattern("dense", dense_pattern())
-        if depthconv2d_flag:  # depthwise and relu cannot be matched at same time
-            self._register_pattern("depthwise_conv2d", depthwise_conv2d_pattern())
-        else:
-            self._register_pattern("relu", relu_pattern())
+        self._register_pattern("depthwise_conv2d", depthwise_conv2d_pattern())
+        self._register_pattern("relu", relu_pattern())
 
         # Relay to Relay function registration
         self._register_relay_pass(PassPhase.PRE_PARTITIONING, ConvertLayout()) # Needed for tflite
@@ -54,10 +52,8 @@ class VanillaExtendedBackend(UMABackend):
         # Relay to TIR function registration
         self._register_tir_pass(PassPhase.TIR_PHASE_0, VanillaExtendedConv2dPass())
         self._register_tir_pass(PassPhase.TIR_PHASE_0, VanillaExtendedDense())
-        if depthconv2d_flag:
-            self._register_tir_pass(PassPhase.TIR_PHASE_0, VanillaExtendedDepthwiseConv2dPass())
-        else:
-            self._register_tir_pass(PassPhase.TIR_PHASE_0, VanillaExtendedReluPass())
+        self._register_tir_pass(PassPhase.TIR_PHASE_0, VanillaExtendedDepthwiseConv2dPass())
+        self._register_tir_pass(PassPhase.TIR_PHASE_0, VanillaExtendedReluPass())
 
         # TIR to runtime function registration
         self._register_codegen(fmt="c", includes=gen_includes)

@@ -55,14 +55,15 @@ def create_depthconv2d():
     "Create depth conv2d layer in relay to offload to vanilla accelerator"
     dtype = "float32"
     k = 3
-    ishape = (1, 3, 14, 14)
-    wshape = (3, 1, k, k)
+    c = 3
+    ishape = (1, c, 14, 14)
+    wshape = (c, 1, k, k)
 
     data0 = relay.var("data", shape=ishape, dtype=dtype)
     weight0 = relay.var("weight", shape=wshape, dtype=dtype)
     out = relay.nn.conv2d(data0, weight0, kernel_size=(k, k),
                           padding=(1, 1), strides=(1,1),
-                          groups=3, channels=3,
+                          groups=c, channels=c,
                           data_layout="NCHW", kernel_layout="OIHW",)
     main_f = relay.Function([data0, weight0], out)
     mod = tvm.IRModule()
@@ -115,14 +116,14 @@ def create_relu():
 
     return mod, inputs, output_list
 
-def offload_to_vanilla(mod, input_list, output_list, test_case, depthconv2d_flag):
-    uma_backend = VanillaExtendedBackend(depthconv2d_flag)
+def offload_to_vanilla(mod, input_list, output_list, test_case):
+    uma_backend = VanillaExtendedBackend()
     uma_backend.register()
     mod = uma_backend.partition(mod)
 
     target = tvm.target.Target("vanilla_extended", host=tvm.target.Target("c"))
 
-    export_directory = tvm.contrib.utils.tempdir(keep_for_debug=True).path
+    # export_directory = tvm.contrib.utils.tempdir(keep_for_debug=True).path
     export_directory = os.path.join("./out_tflite/", test_case)
     if os.path.exists(export_directory):
         os.system("rm -rf " + export_directory)
@@ -143,16 +144,16 @@ def offload_to_vanilla(mod, input_list, output_list, test_case, depthconv2d_flag
 def main():
     "Call relay operators and offload to VanillaExtended backend"
     mod, input_list, output_list = create_conv2d()
-    offload_to_vanilla(mod, input_list, output_list, "conv2d", depthconv2d_flag=False)
+    offload_to_vanilla(mod, input_list, output_list, "conv2d")
 
     mod, input_list, output_list = create_depthconv2d()
-    offload_to_vanilla(mod, input_list, output_list, "depthconv2d", depthconv2d_flag=True)
+    offload_to_vanilla(mod, input_list, output_list, "depthconv2d")
 
     mod, input_list, output_list = create_dense()
-    offload_to_vanilla(mod, input_list, output_list, "dense", depthconv2d_flag=False)
+    offload_to_vanilla(mod, input_list, output_list, "dense")
 
     mod, input_list, output_list = create_relu()
-    offload_to_vanilla(mod, input_list, output_list, "relu", depthconv2d_flag=False)
+    offload_to_vanilla(mod, input_list, output_list, "relu")
 
 if __name__ == "__main__":
     main()
