@@ -28,7 +28,7 @@ from tvm.testing.aot import (AOTTestModel as AOTModel,
 def main():
     mod, params = testing.mobilenet.get_workload(batch_size=1)
     
-    uma_backend = VanillaExtendedBackend(depthconv2d_flag=False)
+    uma_backend = VanillaExtendedBackend()
     uma_backend.register()
     
     target = tvm.target.Target("vanilla_extended", host=tvm.target.Target("c"))
