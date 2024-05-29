@@ -18,7 +18,7 @@
 
 from typing import Callable, Optional
 import tvm
-
+from tvm.relay.backend.contrib.uma.api import tir_to_cs_translator
 
 class UMACodegen(object):
     """

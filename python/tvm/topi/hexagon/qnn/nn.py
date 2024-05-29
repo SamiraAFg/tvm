@@ -845,6 +845,7 @@ def qnn_dense(
             ),
             axis=k,
         ),
+        name="dense_compute",
     )
 
     # Add bias

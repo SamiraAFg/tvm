@@ -72,3 +72,31 @@ def add_llvm_to_block(
     assert len(loops) > 0
     sch.annotate(loops[0], "pragma_import_llvm", _c_to_llvm(c_code_str))
     return sch
+
+# added for Qchocolate
+from tvm._ffi import register_object
+from tvm.runtime import Object
+from typing import List
+from . import _ffi_api
+
+@register_object("relay.ext.uma.CompilationArtifact")
+class CompilationArtifact(Object):
+    """
+    This is a structure to hold binary artifacts
+    for the microNPU.
+    """
+
+    def __init__(
+        self,
+        function_name: str,
+        command_stream: List[int],
+        zero_points: List[int],
+        base_addresses: List[str],
+    ):
+        self.__init_handle_by_constructor__(
+            _ffi_api.CompilationArtifact,  # type: ignore # pylint: disable=no-member
+            function_name,
+            command_stream,
+            zero_points,
+            base_addresses,
+        )
