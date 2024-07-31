@@ -1,0 +1,57 @@
+operators:
+  - name: "gemm"
+    description: "GeMM operator for Qchocolate accelerator"
+    attributes:
+      - name: "inp1_zp"
+        type: "int"
+        default: null
+        description: "lhs input quantization offset"
+      - name: "inp2_zp"
+        type: "int"
+        default: null
+        description: "rhs input quantization offset "
+      - name: "out_scale"
+        type: "double"
+        default: null
+        description: "final scaling factor for the quantized output equals to (S_rhs * S_lhs) / S_out "  
+      - name: "out_zp"
+        type: "int"
+        default: null
+        description: "output quantization offset "
+      - name: "out_dtype"
+        type: "String"
+        default: "int8"
+        description: "the output dtype "
+    inputs:
+      - name: "inp1"
+        type: "Tensor"
+        description: "The Input1 Feature Map tensor"
+      - name: "inp2"
+        type: "Tensor"
+        description: "The Input2 Feature Map tensor"
+      # - name: "bias"
+      #   type: "Tensor"
+      #   description: "The Bias tensor"
+    output:
+      TVM_type: "Tensor"
+      dtype: "Int(8)" #can it be anything? code or types of an input? TODO.
+      shape_rule: |
+        Array<IndexExpr> out_shape({inp1->shape[0], inp2->shape[0]});
+      
+      # description: "Description of the output"
+  
+  # - name: "example_operator2"
+  #   description: "Description of the second operator"
+  #   attributes:
+  #     - name: "attrA"
+  #       type: "string"
+  #       default: "default_value"
+  #       description: "Description of attrA"
+  #   inputs:
+  #     - name: "inputA"
+  #       type: "tensor"
+  #       description: "Description of inputA"
+  #   output:
+  #     type: "tensor"
+  #     shape_rule: "same as inputA"
+  #     description: "Description of the output"

@@ -46,6 +46,8 @@ struct CompilationArtifactNode : public Object {
   /*! \brief The encoded biases and weights in hex format */
   Array<Integer> zero_points;
 
+  double scale;
+
   Array<String> base_addresses;
   
 
@@ -53,6 +55,7 @@ struct CompilationArtifactNode : public Object {
     v->Visit("function_name", &function_name);
     v->Visit("command_stream", &command_stream);
     v->Visit("zero_points", &zero_points);
+    v->Visit("scale", &scale);
     v->Visit("base_addresses", &base_addresses);
   }
 
@@ -60,6 +63,7 @@ struct CompilationArtifactNode : public Object {
     return equal(function_name, other->function_name) &&
            equal(command_stream, other->command_stream) &&
            equal(zero_points, other->zero_points) &&
+           equal(scale, other->scale) &&
            equal(base_addresses, other->base_addresses);
   }
 
@@ -67,6 +71,7 @@ struct CompilationArtifactNode : public Object {
     hash_reduce(function_name);
     hash_reduce(command_stream);
     hash_reduce(zero_points);
+    hash_reduce(scale);
     hash_reduce(base_addresses);
   }
 
@@ -76,7 +81,7 @@ struct CompilationArtifactNode : public Object {
 
 class CompilationArtifact : public ObjectRef {
  public:
-  TVM_DLL CompilationArtifact(String function_name, Array<Integer> command_stream, Array<Integer> zero_points,
+  TVM_DLL CompilationArtifact(String function_name, Array<Integer> command_stream, Array<Integer> zero_points, double scale,
                               Array<String> base_addresses);
   TVM_DEFINE_MUTABLE_OBJECT_REF_METHODS(CompilationArtifact, ObjectRef, CompilationArtifactNode);
 };

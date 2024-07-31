@@ -39,20 +39,22 @@ namespace uma {
 
 CompilationArtifact::CompilationArtifact(String function_name, Array<Integer> command_stream,
                                          Array<Integer> zero_points,
+                                         double scale,
                                          Array<String> base_addresses) {
   auto compilation_artifact_node = make_object<CompilationArtifactNode>();
   compilation_artifact_node->function_name = function_name;
   compilation_artifact_node->command_stream = command_stream;
   compilation_artifact_node->zero_points = zero_points;
+  compilation_artifact_node->scale = scale;
   compilation_artifact_node->base_addresses = base_addresses;
   data_ = std::move(compilation_artifact_node);
 }
 
 TVM_REGISTER_NODE_TYPE(CompilationArtifactNode);
 TVM_REGISTER_GLOBAL("relay.ext.uma.CompilationArtifact")
-    .set_body_typed([](String function_name, Array<Integer> command_stream, Array<Integer> zero_points,
+    .set_body_typed([](String function_name, Array<Integer> command_stream, Array<Integer> zero_points, double scale,
                        Array<String> base_addresses) {
-      return CompilationArtifact(function_name, command_stream, zero_points, base_addresses);
+      return CompilationArtifact(function_name, command_stream, zero_points, scale, base_addresses);
     });
 
 TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
@@ -62,6 +64,7 @@ TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
                 << "function_name=" << node->function_name
                 << ",\n  command_stream=" << node->command_stream
                 << ",\n  zero_points=" << node->zero_points
+                << ",\n  scale=" << node->scale
                 << ",\n  base_addresses=" << node->base_addresses << ")";
     });
 

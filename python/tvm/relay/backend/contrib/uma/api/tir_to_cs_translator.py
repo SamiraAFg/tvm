@@ -52,7 +52,10 @@ def primfunc_to_artifact(primfunc: tvm.tir.PrimFunc) -> utils.CompilationArtifac
     """
     primfunc.show()
 
-    zp_args = extract_zps(primfunc)
+    zp_args, scale = extract_zps(primfunc)
+    print("MW"*10)
+    print(scale)
+    print(zp_args)
 
     symbol = str(primfunc.attrs["global_symbol"])
     # const_dict = primfunc.attrs["ethos-u.constants"]
@@ -90,7 +93,7 @@ def primfunc_to_artifact(primfunc: tvm.tir.PrimFunc) -> utils.CompilationArtifac
         print("*"*20)
         print(f"sizeof(cmd_stream): {len(cmd_stream)}")
 
-    return utils.CompilationArtifact(symbol, cmd_stream, zp_args, base_addresses)
+    return utils.CompilationArtifact(symbol, cmd_stream, zp_args, scale, base_addresses)
            
      
 
@@ -161,7 +164,7 @@ def generate_command_stream_2(extern_list):
     return cmd_stream
 
 
-def extract_zps(primfunc):
+def extract_exp_zps(primfunc):
     s1 = []
     s2 = []
     zp = list()
@@ -179,3 +182,30 @@ def extract_zps(primfunc):
             zp.append(s2[i])         
     print(f"zps: {zp}")
     return zp
+
+def extract_zps(func):
+    zps = list()
+    attrs = func.attrs
+    in1_zp = None
+    in2_zp = None
+    scale = None
+    out_zp = None
+    print(attrs)
+    for key in attrs.keys():
+        if key == "in1_zp":
+            in1_zp = attrs[key]
+        elif key == "in2_zp":
+            in2_zp = attrs[key]
+        elif key == "scale":
+            scale = attrs[key].value
+        elif key == "out_zp":
+            out_zp = attrs[key]
+    # assert in2_zp is not None, "in2_zp is None"
+    # assert in1_zp is not None, "in1_zp is None"
+    if in2_zp is not None:
+        zps.append(in1_zp)
+        zps.append(in2_zp)
+        zps.append(out_zp)
+    else: return extract_exp_zps(func), scale
+
+    return zps, scale

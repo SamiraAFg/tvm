@@ -64,6 +64,8 @@ class UMALower:
 
         lower_to_te = tvm._ffi.get_global_func("relay.backend.LowerToTE")
         te_cached_func = lower_to_te(relay_prim_func)
+        
+            
         x = _get_tensors(te_cached_func)
         tir_prim_func = te.create_prim_func(x)
         tir_prim_func = tir_prim_func.with_attr(
@@ -77,6 +79,11 @@ class UMALower:
 
         tir_prim_func = tir_prim_func.with_attr("target", target)
         tir_prim_func = tir_prim_func.with_attr("relay_attrs", relay_prim_func.attrs)
+        
+        zp_attrs = te_cached_func.outputs[0].op.attrs    
+        if zp_attrs is not None:
+            for key in zp_attrs.keys():
+                tir_prim_func = tir_prim_func.with_attr(key, zp_attrs[key])
         return tir_prim_func
 
     def _lower_stir_to_nstir(self, prim_func: tvm.tir.PrimFunc) -> tvm.tir.PrimFunc:

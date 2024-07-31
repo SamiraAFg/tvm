@@ -58,7 +58,7 @@ runtime::Module TIRToRuntime(IRModule mod, Target target) {
 
   String target_name = target->kind->name;
 
-  if (target_name == "qchocolate_accelerator"){
+  if (target_name == "qchocolate_accelerator" || target_name == "qchocolate"){
     Array<CompilationArtifact> compile_artifacts;
     for (const auto& kv : mod->functions) {
       const tir::PrimFunc& prim_func = Downcast<tir::PrimFunc>(kv.second);

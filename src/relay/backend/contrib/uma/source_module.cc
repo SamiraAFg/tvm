@@ -266,6 +266,8 @@ class QCHModuleNode : public ModuleNode {
     ss << (compilation_artifact->base_addresses)[2] << ", ";
     ss << (compilation_artifact->zero_points)[0] << ", ";
     ss << (compilation_artifact->zero_points)[1] << ", ";
+    ss << (compilation_artifact->zero_points)[2] << ", ";
+    ss << (compilation_artifact->scale) << ", ";
     ss << "cms_data, cms_data_size);\n";
     ss << "  int32_t result = DeviceRun();\n";
     ss << "  if (result != 0) { return -1; }\n";

@@ -27,6 +27,7 @@ import os
 import shutil
 import sys
 import pathlib
+from operators import UMAOperators
 from inflection import camelize, underscore
 
 
@@ -36,6 +37,11 @@ def _parse_args():
         "--add_hardware",
         type=str,
         required=True,
+    )
+    parser.add_argument(
+        "--add_operator_file",
+        type = str,
+        help = "Path to the YAML file inlcuding the spec of new Relay operators"
     )
     parser.add_argument(
         "--tutorial",
@@ -67,6 +73,7 @@ def main():
     """
     args = _parse_args()
     add_hw_name = args.add_hardware
+
     uma_template_path = pathlib.Path(os.getcwd(), "_template").absolute()
 
     add_hw_path = os.path.join(uma_template_path.parent, add_hw_name)
@@ -90,6 +97,11 @@ def main():
 
     template_name = "my_ai_hw"
     replace_template_name(destination_files, template_name, add_hw_name)
+
+    # add new Relay operators 
+    if args.add_operator_file is not None:
+        OpObj = UMAOperators(add_hw_name, add_hw_path)
+        OpObj._import_ops_config(args.add_operator_file)
 
     print(f"Success: added {add_hw_name} to {add_hw_path}")
 

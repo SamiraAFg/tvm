@@ -91,6 +91,7 @@ class CompilationArtifact(Object):
         function_name: str,
         command_stream: List[int],
         zero_points: List[int],
+        scale: float,
         base_addresses: List[str],
     ):
         self.__init_handle_by_constructor__(
@@ -98,5 +99,6 @@ class CompilationArtifact(Object):
             function_name,
             command_stream,
             zero_points,
+            scale,
             base_addresses,
         )
